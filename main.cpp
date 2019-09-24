@@ -11,7 +11,7 @@ using namespace wup;
 
 WUP_STATICS;
 
-const char *
+QString
 getBaseFilepath(Params & params)
 {
     auto defaultPrefixout = cat(QDir::homePath(), "/Pictures/screenshot_", time_milli());
@@ -21,18 +21,32 @@ getBaseFilepath(Params & params)
 void
 screenshotFull(QApplication & a, Params & params)
 {
-    for (int i=0;i!=a.screens().size();++i)
+    QPixmap * images = new QPixmap[a.screens().size()];
+
+    parallel(4, a.screens().size(), [&](uint tid, uint i)
     {
-        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
         auto & screen = *a.screens().at(i);
         auto r = screen.geometry();
-
         auto shot = screen.grabWindow(QDesktopWidget().winId(), r.x(), r.y(), r.width(), r.height());
+        images[i] = shot;
 
+        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
         shot.save(filepath);
-
         print(filepath);
-    }
+    });
+
+//    for (int i=0;i!=a.screens().size();++i)
+//    {
+//        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
+//        auto & screen = *a.screens().at(i);
+//        auto r = screen.geometry();
+
+//        auto shot = screen.grabWindow(QDesktopWidget().winId(), r.x(), r.y(), r.width(), r.height());
+
+//        shot.save(filepath);
+
+//        print(filepath);
+//    }
 }
 
 void
