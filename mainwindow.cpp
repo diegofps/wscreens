@@ -23,11 +23,9 @@ MainWindow::MainWindow(QRect * r, QWidget *parent) :
     show();
 
     if (r != nullptr)
-    {
         setGeometry(r->x(),r->y(),r->width(),r->height());
-    }
 
-    anim = new Anim(150, 15);
+    anim = new Anim(300, 15);
     QMutex * m = new QMutex();
 
     connect(anim, &Anim::update, [&](const double v)
