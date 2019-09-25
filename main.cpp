@@ -1,7 +1,11 @@
+#include "blink.h"
+#include "mainwindow.h"
+
 #include <QRegularExpression>
 #include <QDesktopWidget>
 #include <QApplication>
 #include <QProcess>
+#include <QWindow>
 #include <QScreen>
 #include <QDir>
 
@@ -18,35 +22,50 @@ getBaseFilepath(Params & params)
     return params.getString("o", defaultPrefixout.c_str());
 }
 
+MainWindow *
+showBlink(QRect * r)
+{
+    MainWindow * main = new MainWindow(r);
+    main->show();
+    return main;
+}
+
 void
 screenshotFull(QApplication & a, Params & params)
 {
-    QPixmap * images = new QPixmap[a.screens().size()];
+//    QPixmap * images = new QPixmap[a.screens().size()];
 
-    parallel(4, a.screens().size(), [&](uint tid, uint i)
-    {
-        auto & screen = *a.screens().at(i);
-        auto r = screen.geometry();
-        auto shot = screen.grabWindow(QDesktopWidget().winId(), r.x(), r.y(), r.width(), r.height());
-        images[i] = shot;
-
-        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
-        shot.save(filepath);
-        print(filepath);
-    });
-
-//    for (int i=0;i!=a.screens().size();++i)
+//    parallel(4, a.screens().size(), [&](uint tid, uint i)
 //    {
-//        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
 //        auto & screen = *a.screens().at(i);
 //        auto r = screen.geometry();
-
 //        auto shot = screen.grabWindow(QDesktopWidget().winId(), r.x(), r.y(), r.width(), r.height());
+//        images[i] = shot;
 
+//        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
 //        shot.save(filepath);
-
 //        print(filepath);
-//    }
+
+//        showBlink(&r);
+//    });
+
+//    delete [] images;
+
+
+
+    for (int i=0;i!=a.screens().size();++i)
+    {
+        auto filepath = QString(cat(getBaseFilepath(params), "_", i, "_full.png").c_str());
+        auto screen = a.screens().at(i);
+        auto r = screen->geometry();
+
+        auto shot = screen->grabWindow(QDesktopWidget().winId(), r.x(), r.y(), r.width(), r.height());
+
+        shot.save(filepath);
+
+        showBlink(&r);
+        print(filepath);
+    }
 }
 
 void
@@ -96,6 +115,9 @@ screenshotWindow(QApplication & a, Params & params)
         shot.save(filepath);
 
         print(filepath);
+
+        QRect r(x, y, w, h);
+        showBlink(&r);
     }
     else
     {
@@ -104,15 +126,25 @@ screenshotWindow(QApplication & a, Params & params)
 }
 
 void
-screenshotRegion(QApplication & a, Params & params)
+screenshotRegion(QApplication & , Params & )
 {
     notImplemented();
+}
+
+void
+show()
+{
+     MainWindow * main = new MainWindow(nullptr, nullptr);
+     main->show();
 }
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     Params params(argc, argv);
+
+//    MainWindow * main = new MainWindow(nullptr, nullptr);
+//    main->show();
 
     if (params.has("f"))
         screenshotFull(a, params);
@@ -126,5 +158,8 @@ int main(int argc, char *argv[])
     else
         error("Missing action parameter: -w, -f, -r");
 
-    return 0;
+//    MainWindow * main = new MainWindow(nullptr, nullptr);
+//    main->show();
+
+    return a.exec();
 }
